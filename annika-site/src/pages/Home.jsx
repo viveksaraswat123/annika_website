@@ -147,17 +147,17 @@ export default function Home() {
             <CategoryCard 
               title="PCB Assemblies" 
               points={["Single & Double Sided", "35 Micron Copper", "HASL Surface Finish"]}
-              img="src/assets/p1.webp"
+              img="images/p1.webp"
             />
             <CategoryCard 
               title="Wire Harness" 
               points={["Custom 2-Pin PVC", "Pure Copper Core", "Industrial Durability"]}
-              img="src/assets/p2.jpg"
+              img="images/p2.jpg"
             />
             <CategoryCard 
               title="Neon Indicators" 
               points={["25,000 Hrs Life", "210V - 240V AC/DC", "22.5 mm Diameter"]}
-              img="src/assets/p3.webp"
+              img="images/p3.webp"
             />
           </div>
         </div>

@@ -9,35 +9,35 @@ const products = [
     category: "PCB Assembly",
     title: "PCB Card Assembly",
     desc: "High-precision single-sided assemblies with 35-micron copper and HASL finishing for extreme shelf life.",
-    image: "src/assets/p1.webp", 
+    image: "images/p1.webp", 
     specs: { "Voltage": "210V", "Finish": "HASL", "Copper": "35 Micron", "Origin": "India" }
   },
   {
     category: "Wire Harness",
     title: "Electronics Wire Harness",
     desc: "Customized PVC insulated copper wire harnesses engineered for heavy-duty industrial machinery.",
-    image: "src/assets/p2.jpg",
+    image: "images/p2.jpg",
     specs: { "Pins": "2-12 Pin", "Material": "Pure Copper", "Jacket": "PVC", "Rating": "High Temp" }
   },
   {
     category: "Indicators",
     title: "Neon Indicator Lamps",
     desc: "Extended-life signaling modules designed to withstand up to 135°C in continuous industrial operation.",
-    image: "src/assets/p3.webp",
+    image: "images/p3.webp",
     specs: { "Life": "25,000 Hrs", "Current": "25 Amps", "Temp": "135°C", "Type": "Industrial" }
   },
   {
     category: "Indicators",
     title: "LED Neon Indicator",
     desc: "High-visibility control panel indicators featuring low-wattage consumption and universal mounting.",
-    image: "src/assets/p4.webp",
+    image: "images/p4.webp",
     specs: { "Voltage": "24V DC", "Mounting": "22.5 mm", "Body": "Plastic", "Wattage": "12-24V" }
   },
   {
     category: "PCB Assembly",
     title: "Electronic Sub Assembly",
     desc: "Integrated board builds for complex electronic products, rated for 20A current stability.",
-    image: "src/assets/p5.webp",
+    image: "images/p5.webp",
     specs: { "Current": "20A", "Stability": "High", "Usage": "OEM", "Package": "Packet" }
   }
 ];
