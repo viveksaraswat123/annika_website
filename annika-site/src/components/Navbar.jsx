@@ -18,21 +18,17 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on route change or screen resize
+  // Close mobile menu on route change
   useEffect(() => {
     setOpen(false);
     if (typeof window !== "undefined") {
-      document.body.style.overflow = "unset"; // Ensure scrolling is restored
+      document.body.style.overflow = "unset"; 
     }
   }, [location]);
 
   // Lock body scroll when menu is open
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    document.body.style.overflow = open ? "hidden" : "unset";
   }, [open]);
 
   const navLinks = [
@@ -54,17 +50,25 @@ export default function Navbar() {
       <nav
         className={`fixed w-full z-[100] transition-all duration-500 ease-in-out ${
           scrolled || isInternalPage || open
-            ? "bg-white/90 backdrop-blur-xl py-3 shadow-lg border-b border-slate-100"
+            ? "bg-white/95 backdrop-blur-xl py-3 shadow-lg border-b border-slate-100"
             : "bg-transparent py-6"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           
-          {/* LOGO */}
-          <Link to="/" className="relative z-[110]">
+          {/* BRANDING: Logo + Text */}
+          <Link to="/" className="relative z-[110] flex items-center gap-3 group">
+            <div className="relative">
+              {/* UPDATED: Changed from logo.svg to logo.png */}
+              <img 
+                src="/logo.png" 
+                alt="Annika Tech Logo" 
+                className="h-10 w-auto md:h-12 object-contain transition-transform duration-300 group-hover:scale-105" 
+              />
+            </div>
             <div className="flex flex-col">
               <span className="text-xl md:text-2xl font-black tracking-tighter leading-none text-slate-900">
-                ANNIKA <span className="text-cyan-500">TECH</span>
+                <span className="text-cyan-400">ANNIKA</span>
               </span>
               <span className="text-[9px] md:text-[10px] font-bold tracking-[0.3em] uppercase text-slate-500">
                 Technologies
@@ -72,22 +76,24 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* DESKTOP NAV */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group ${
-                  location.pathname === link.path ? "text-cyan-500" : "text-slate-600 hover:text-cyan-500"
-                }`}
-              >
-                {link.name}
-                <span className={`absolute -bottom-1 left-0 h-0.5 bg-cyan-500 transition-all duration-300 ${
-                  location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
-                }`} />
-              </Link>
-            ))}
+          {/* DESKTOP NAVIGATION */}
+          <div className="hidden md:flex items-center gap-10">
+            <div className="flex items-center gap-8">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group ${
+                    location.pathname === link.path ? "text-cyan-500" : "text-slate-600 hover:text-cyan-500"
+                  }`}
+                >
+                  {link.name}
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-cyan-500 transition-all duration-300 ${
+                    location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
+                  }`} />
+                </Link>
+              ))}
+            </div>
             
             <Link
               to="/contact"
@@ -107,7 +113,7 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* MOBILE MENU OVERLAY */}
+        {/* MOBILE OVERLAY */}
         <AnimatePresence>
           {open && (
             <motion.div
@@ -117,9 +123,6 @@ export default function Navbar() {
               transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
               className="fixed inset-0 bg-white z-[105] md:hidden flex flex-col pt-32 px-8 overflow-hidden"
             >
-              {/* Decorative Background Element */}
-              <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-cyan-50 rounded-full blur-3xl opacity-50" />
-              
               <div className="flex flex-col gap-4 relative z-10">
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-2">Navigation</p>
                 {navLinks.map((link, i) => (
@@ -136,13 +139,12 @@ export default function Navbar() {
                       }`}
                     >
                       {link.name}
-                      <ChevronRight className={`transition-transform duration-300 ${location.pathname === link.path ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`} />
+                      <ChevronRight className={`transition-transform duration-300 ${location.pathname === link.path ? "opacity-100" : "opacity-0"}`} />
                     </Link>
                   </motion.div>
                 ))}
               </div>
 
-              {/* Mobile Bottom Section */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -151,14 +153,10 @@ export default function Navbar() {
               >
                 <Link
                   to="/contact"
-                  className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 shadow-2xl shadow-slate-900/20"
+                  className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3"
                 >
-                  Request Technical Quote <ArrowUpRight size={18} />
+                  Get Technical Quote <ArrowUpRight size={18} />
                 </Link>
-                <div className="mt-8 flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] font-bold uppercase tracking-widest">© 2026 Annika Tech</span>
-                  <div className="h-[1px] w-12 bg-slate-200" />
-                </div>
               </motion.div>
             </motion.div>
           )}
