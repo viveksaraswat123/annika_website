@@ -22,7 +22,7 @@ app = FastAPI(
 origins = [
     "https://annika-technologies.com",
     "https://www.annika-technologies.com",
-    "https://annikawebsite.vercel.app", # Your Vercel preview URL
+    "https://annika-website.vercel.app", # Your Vercel preview URL
     "http://localhost:5173",            # For local testing
 ]
 
