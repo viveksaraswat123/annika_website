@@ -4,7 +4,7 @@ import { MapPin, Phone, Mail, Send, CheckCircle2 } from "lucide-react";
 import axios from "axios"; // Ensure you run 'npm install axios'
 
 // Configuration for API
-const API_BASE_URL = "http://localhost:8000/api"; // Update with your FastAPI URL
+const API_BASE_URL = "https://annikawebsite-production.up.railway.app"; // Update with your FastAPI URL
 
 export default function Contact() {
   const formRef = useRef();
@@ -26,7 +26,7 @@ export default function Contact() {
 
     try {
       // API call to FastAPI
-      const response = await axios.post(`${API_BASE_URL}/contact`, formData);
+      const response = await axios.post(`${API_BASE_URL}/api/contact`, formData);
 
       if (response.status === 200 || response.status === 201) {
         setIsSent(true);

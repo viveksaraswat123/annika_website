@@ -17,13 +17,19 @@ app = FastAPI(
 )
 
 # 2. DYNAMIC CORS CONFIGURATION
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://annika-technologies.com,https://www.annika-technologies.com").split(",")
+# In your FastAPI main.py
+origins = [
+    "https://annika-technologies.com",
+    "https://www.annika-technologies.com",
+    "https://annikawebsite.vercel.app", # Your Vercel preview URL
+    "http://localhost:5173",            # For local testing
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=origins,  # This tells Railway to accept requests from these sites
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
