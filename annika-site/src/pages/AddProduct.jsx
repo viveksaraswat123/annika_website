@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { db, storage } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { motion, AnimatePresence } from "framer-motion";
 import { PackagePlus, CheckCircle, Upload, Loader2, X, Image as ImageIcon } from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
+import { getToken } from "../auth";
 
+const API = import.meta.env.VITE_API_URL;
 const CATEGORIES = ["PCB Assembly", "Wire Harness", "Industrial Indicators"];
 
 export default function AddProduct() {
@@ -14,6 +13,7 @@ export default function AddProduct() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState("");
 
   const handleImageChange = (file) => {
     if (!file) return;
@@ -38,28 +38,51 @@ export default function AddProduct() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     const form = e.target;
+    const token = getToken();
+
     try {
       let imageUrl = "";
+
+      // 1. Upload image to Cloudinary via backend
       if (imageFile) {
-        const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
-        imageUrl = await getDownloadURL(storageRef);
+        const formData = new FormData();
+        formData.append("file", imageFile);
+        const uploadRes = await fetch(`${API}/api/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!uploadRes.ok) throw new Error("Image upload failed");
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.url;
       }
-      await addDoc(collection(db, "products"), {
-        title: form.title.value,
-        category: form.category.value,
-        desc: form.desc.value,
-        image: imageUrl,
-        in_stock: true,
-        created_at: new Date(),
+
+      // 2. Save product to MongoDB via backend
+      const res = await fetch(`${API}/api/products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: form.title.value,
+          category: form.category.value,
+          desc: form.desc.value,
+          image: imageUrl,
+          in_stock: true,
+        }),
       });
+
+      if (!res.ok) throw new Error("Failed to save product");
+
       setSuccess(true);
       form.reset();
       removeImage();
       setTimeout(() => setSuccess(false), 3500);
     } catch (err) {
-      alert("Error adding product: " + err.message);
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -95,8 +118,8 @@ export default function AddProduct() {
           </div>
 
           {/* Card */}
-          <div className="bg-[#111827] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-            
+          <div className="relative bg-[#111827] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+
             {/* Success Overlay */}
             <AnimatePresence>
               {success && (
@@ -126,6 +149,14 @@ export default function AddProduct() {
 
             <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 relative">
 
+              {/* Error Banner */}
+              {error && (
+                <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">
+                  <X size={16} className="shrink-0" />
+                  {error}
+                </div>
+              )}
+
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label>Product Image</Label>
@@ -133,11 +164,8 @@ export default function AddProduct() {
                   <div className="relative w-full h-48 rounded-xl overflow-hidden border border-slate-700 group">
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        className="w-9 h-9 rounded-full bg-red-500/90 hover:bg-red-500 flex items-center justify-center transition-all"
-                      >
+                      <button type="button" onClick={removeImage}
+                        className="w-9 h-9 rounded-full bg-red-500/90 hover:bg-red-500 flex items-center justify-center transition-all">
                         <X size={16} className="text-white" />
                       </button>
                     </div>
@@ -153,51 +181,32 @@ export default function AddProduct() {
                     className={`relative w-full h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 transition-all cursor-pointer
                       ${dragOver ? "border-cyan-500 bg-cyan-500/5" : "border-slate-700 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-800/50"}`}
                   >
-                    <input
-                      type="file"
-                      accept="image/*"
+                    <input type="file" accept="image/*"
                       onChange={(e) => handleImageChange(e.target.files[0])}
-                      className="absolute inset-0 opacity-0 z-10 cursor-pointer"
-                    />
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all
-                      ${dragOver ? "bg-cyan-500/20" : "bg-slate-700/50"}`}>
-                      {dragOver ? (
-                        <Upload size={18} className="text-cyan-400" />
-                      ) : (
-                        <ImageIcon size={18} className="text-slate-500" />
-                      )}
+                      className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${dragOver ? "bg-cyan-500/20" : "bg-slate-700/50"}`}>
+                      {dragOver ? <Upload size={18} className="text-cyan-400" /> : <ImageIcon size={18} className="text-slate-500" />}
                     </div>
                     <div className="text-center">
-                      <p className="text-sm font-medium text-slate-400">
-                        {dragOver ? "Drop to upload" : "Click or drag & drop"}
-                      </p>
+                      <p className="text-sm font-medium text-slate-400">{dragOver ? "Drop to upload" : "Click or drag & drop"}</p>
                       <p className="text-xs text-slate-600 mt-0.5">PNG, JPG up to 10MB</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Two column row: Title + Category */}
+              {/* Title + Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <Label>Product Title</Label>
-                  <input
-                    name="title"
-                    required
-                    placeholder="e.g. PCB Card Assembly"
-                    className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-                  />
+                  <input name="title" required placeholder="e.g. PCB Card Assembly"
+                    className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all" />
                 </div>
-
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <select
-                    name="category"
-                    className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
+                  <select name="category"
+                    className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all appearance-none cursor-pointer">
+                    {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
                 </div>
               </div>
@@ -205,40 +214,23 @@ export default function AddProduct() {
               {/* Description */}
               <div className="space-y-2">
                 <Label>Description</Label>
-                <textarea
-                  name="desc"
-                  rows={4}
-                  required
+                <textarea name="desc" rows={4} required
                   placeholder="Describe the product, specifications, use cases..."
-                  className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none"
-                />
+                  className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none" />
               </div>
 
-              {/* Divider */}
               <div className="border-t border-slate-800" />
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    document.querySelector("form").reset();
-                    removeImage();
-                  }}
-                  className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-slate-700 text-sm font-medium text-slate-400 hover:text-white hover:border-slate-600 hover:bg-slate-800 transition-all"
-                >
+                <button type="button"
+                  onClick={() => { document.querySelector("form").reset(); removeImage(); setError(""); }}
+                  className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-slate-700 text-sm font-medium text-slate-400 hover:text-white hover:border-slate-600 hover:bg-slate-800 transition-all">
                   Clear Form
                 </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg shadow-cyan-900/30"
-                >
-                  {loading ? (
-                    <><Loader2 size={16} className="animate-spin" /> Saving Product...</>
-                  ) : (
-                    <><PackagePlus size={16} /> Save Product</>
-                  )}
+                <button type="submit" disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl text-sm font-semibold tracking-wide transition-all shadow-lg shadow-cyan-900/30">
+                  {loading ? <><Loader2 size={16} className="animate-spin" /> Saving Product...</> : <><PackagePlus size={16} /> Save Product</>}
                 </button>
               </div>
 
