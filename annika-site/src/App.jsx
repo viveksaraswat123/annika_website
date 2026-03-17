@@ -9,8 +9,8 @@ import Products from "./pages/Products";
 import Facilities from "./pages/Facilities";
 import Contact from "./pages/Contact";
 
-// Admin Pages
-import AdminLogin from "./pages/Adminlogin"; 
+// Admin Pages - Uncommented and path verified
+import AdminLogin from "./pages/AdminLogin"; 
 import Admin from "./pages/Admin";
 import AddProduct from "./pages/AddProduct";
 
@@ -18,20 +18,20 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* --- PUBLIC ROUTES --- */}
+        {/* --- PUBLIC ROUTES (With Navbar/Footer) --- */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="about" element={<About />} />
           <Route path="products" element={<Products />} />
           <Route path="facilities" element={<Facilities />} />
           <Route path="contact" element={<Contact />} />
-          {/* REMOVED: <Route path="admin" element={<Admin />} /> */}
+         
         </Route>
 
         {/* --- ADMIN AUTH --- */}
         <Route path="/admin-login" element={<AdminLogin />} />
 
-        {/* --- PROTECTED ADMIN ROUTES --- */}
+        {/* --- PROTECTED ADMIN ROUTES (No Public Layout) --- */}
         <Route 
           path="/admin" 
           element={
