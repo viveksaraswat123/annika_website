@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -8,12 +11,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from datetime import datetime
+import sys
 
+# Load .env file
+load_dotenv()
 # ─── 1. LOGGING ───────────────────────────────────────────────────────────────
-logging.basicConfig(level=logging.INFO)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
 logger = logging.getLogger(__name__)
 
-# ─── 2. APP INIT ──────────────────────────────────────────────────────────────
+# ─── 2. EMAIL CONFIG ─────────────────────────────────────────────────────────
+SMTP_USER   = os.getenv("SMTP_USER")
+SMTP_PASS   = os.getenv("SMTP_PASS")
+SALES_EMAIL = os.getenv("SALES_EMAIL")
+
+missing_envs = []
+if not SMTP_USER:   missing_envs.append("SMTP_USER")
+if not SMTP_PASS:   missing_envs.append("SMTP_PASS")
+if not SALES_EMAIL: missing_envs.append("SALES_EMAIL")
+
+if missing_envs:
+    logger.critical(f"Missing environment variables: {', '.join(missing_envs)}. Exiting...")
+    sys.exit(1)
+
+# ─── 3. APP INIT ──────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Annika Technologies Enterprise API",
     description="Production API for Manufacturing & Inquiry Management",
@@ -21,7 +42,7 @@ app = FastAPI(
     redirect_slashes=False,
 )
 
-# ─── 3. CORS ──────────────────────────────────────────────────────────────────
+# ─── 4. CORS ──────────────────────────────────────────────────────────────────
 origins = [
     "https://annika-technologies.com",
     "https://www.annika-technologies.com",
@@ -37,52 +58,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── 4. EMAIL CONFIG (read from environment variables) ────────────────────────
-# Set these in Railway → Variables:
-#   GMAIL_SENDER_EMAIL  = your Gmail address used to SEND (e.g. noreply@gmail.com)
-#   GMAIL_APP_PASSWORD  = 16-char App Password from Google Account → Security → App Passwords
-#   SALES_EMAIL         = sales@annika-technologies.com  (the recipient)
-
-GMAIL_SENDER_EMAIL = os.getenv("GMAIL_SENDER_EMAIL", "")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
-SALES_EMAIL        = os.getenv("SALES_EMAIL", "sales@annika-technologies.com")
-
-
+# ─── 5. SEND EMAIL FUNCTION ───────────────────────────────────────────────────
 def send_email(subject: str, html_body: str, reply_to: str = "") -> bool:
-    """
-    Sends an HTML email via Gmail SMTP using an App Password.
-    Returns True on success, False on failure.
-    """
-    if not GMAIL_SENDER_EMAIL or not GMAIL_APP_PASSWORD:
-        logger.warning("Email credentials not configured — skipping email send.")
-        return False
-
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"]    = f"Annika Technologies <{GMAIL_SENDER_EMAIL}>"
-        msg["To"]      = SALES_EMAIL
+        msg["From"] = f"Annika Technologies <{SALES_EMAIL}>"
+        msg["To"] = SALES_EMAIL
         if reply_to:
             msg["Reply-To"] = reply_to
-
         msg.attach(MIMEText(html_body, "html"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(GMAIL_SENDER_EMAIL, GMAIL_APP_PASSWORD)
-            server.sendmail(GMAIL_SENDER_EMAIL, SALES_EMAIL, msg.as_string())
+        with smtplib.SMTP("smtp.hostinger.com", 587) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SALES_EMAIL, SALES_EMAIL, msg.as_string())
 
         logger.info(f"Email sent to {SALES_EMAIL} | Subject: {subject}")
         return True
 
     except smtplib.SMTPAuthenticationError:
-        logger.error("Gmail SMTP authentication failed. Check GMAIL_APP_PASSWORD.")
+        logger.error("SMTP Authentication failed — check username/password or alias verification")
         return False
     except Exception as e:
         logger.error(f"Email send failed: {str(e)}")
         return False
 
-
-# ─── 5. DATA MODELS ───────────────────────────────────────────────────────────
+# ─── 6. DATA MODELS ───────────────────────────────────────────────────────────
 class Product(BaseModel):
     id: int
     category: str
@@ -91,73 +93,52 @@ class Product(BaseModel):
     specs: dict
     in_stock: bool = True
 
-
 class ContactInquiry(BaseModel):
-    user_name:  str      = Field(..., min_length=2,  max_length=50)
+    user_name:  str = Field(..., min_length=2, max_length=50)
     user_email: EmailStr
     company:    Optional[str] = Field(None, max_length=100)
     phone:      Optional[str] = Field(None, max_length=20)
-    message:    str      = Field(..., min_length=10, max_length=1000)
+    message:    str = Field(..., min_length=10, max_length=1000)
     timestamp:  datetime = Field(default_factory=datetime.utcnow)
 
-
 class DatasheetRequest(BaseModel):
-    user_name:    str      = Field(..., min_length=2,  max_length=50)
+    user_name:    str = Field(..., min_length=2, max_length=50)
     user_email:   EmailStr
     company:      Optional[str] = Field(None, max_length=100)
     phone:        Optional[str] = Field(None, max_length=20)
-    product_title: str     = Field(..., max_length=100)
+    product_title: str = Field(..., max_length=100)
     message:      Optional[str] = Field(None, max_length=1000)
     timestamp:    datetime = Field(default_factory=datetime.utcnow)
 
-
 class CustomSpecsInquiry(BaseModel):
-    user_name:    str      = Field(..., min_length=2,  max_length=50)
+    user_name:    str = Field(..., min_length=2, max_length=50)
     user_email:   EmailStr
     phone:        Optional[str] = Field(None, max_length=20)
-    product_type: str      = Field(..., max_length=50)
-    specs:        str      = Field(..., min_length=10, max_length=2000)
+    product_type: str = Field(..., max_length=50)
+    specs:        str = Field(..., min_length=10, max_length=2000)
     timestamp:    datetime = Field(default_factory=datetime.utcnow)
 
-
-# ─── 6. MOCK DATABASE ─────────────────────────────────────────────────────────
+# ─── 7. MOCK DATABASE ─────────────────────────────────────────────────────────
 PRODUCTS_DB = [
-    {
-        "id": 1, "category": "PCB Assembly", "title": "PCB Card Assembly",
-        "desc": "High-precision single-sided assemblies with 35-micron copper and HASL finishing.",
-        "specs": {"Voltage": "210V", "Finish": "HASL", "Copper": "35 Micron", "Origin": "India"},
-        "in_stock": True,
-    },
-    {
-        "id": 2, "category": "Wire Harness", "title": "Electronics Wire Harness",
-        "desc": "Customized PVC insulated copper wire harnesses for heavy-duty industrial machinery.",
-        "specs": {"Pins": "2-12 Pin", "Material": "Pure Copper", "Jacket": "PVC", "Rating": "High Temp"},
-        "in_stock": True,
-    },
-    {
-        "id": 3, "category": "Indicators", "title": "Neon Indicator Lamps",
-        "desc": "Extended-life signaling modules rated for 135°C continuous operation.",
-        "specs": {"Life": "25,000 Hrs", "Current": "25 Amps", "Temp": "135°C", "Type": "Industrial"},
-        "in_stock": True,
-    },
-    {
-        "id": 4, "category": "Indicators", "title": "LED Neon Indicator",
-        "desc": "High-visibility control panel indicators with universal mounting.",
-        "specs": {"Voltage": "24V DC", "Mounting": "22.5 mm", "Body": "Plastic", "Wattage": "12-24V"},
-        "in_stock": True,
-    },
-    {
-        "id": 5, "category": "PCB Assembly", "title": "Electronic Sub Assembly",
-        "desc": "Integrated board builds for complex electronic products, rated 20A.",
-        "specs": {"Current": "20A", "Stability": "High", "Usage": "OEM", "Package": "Packet"},
-        "in_stock": True,
-    },
+    {"id": 1, "category": "PCB Assembly", "title": "PCB Card Assembly",
+     "desc": "High-precision single-sided assemblies with 35-micron copper and HASL finishing.",
+     "specs": {"Voltage": "210V", "Finish": "HASL", "Copper": "35 Micron", "Origin": "India"}, "in_stock": True},
+    {"id": 2, "category": "Wire Harness", "title": "Electronics Wire Harness",
+     "desc": "Customized PVC insulated copper wire harnesses for heavy-duty industrial machinery.",
+     "specs": {"Pins": "2-12 Pin", "Material": "Pure Copper", "Jacket": "PVC", "Rating": "High Temp"}, "in_stock": True},
+    {"id": 3, "category": "Indicators", "title": "Neon Indicator Lamps",
+     "desc": "Extended-life signaling modules rated for 135°C continuous operation.",
+     "specs": {"Life": "25,000 Hrs", "Current": "25 Amps", "Temp": "135°C", "Type": "Industrial"}, "in_stock": True},
+    {"id": 4, "category": "Indicators", "title": "LED Neon Indicator",
+     "desc": "High-visibility control panel indicators with universal mounting.",
+     "specs": {"Voltage": "24V DC", "Mounting": "22.5 mm", "Body": "Plastic", "Wattage": "12-24V"}, "in_stock": True},
+    {"id": 5, "category": "PCB Assembly", "title": "Electronic Sub Assembly",
+     "desc": "Integrated board builds for complex electronic products, rated 20A.",
+     "specs": {"Current": "20A", "Stability": "High", "Usage": "OEM", "Package": "Packet"}, "in_stock": True},
 ]
 
-
-# ─── 7. EMAIL TEMPLATES ───────────────────────────────────────────────────────
+# ─── 8. EMAIL TEMPLATES ───────────────────────────────────────────────────────
 def _base_template(title: str, badge: str, badge_color: str, rows: list[tuple]) -> str:
-    """Shared HTML email shell."""
     rows_html = "".join(
         f"""<tr>
               <td style="padding:10px 16px;color:#64748b;font-size:13px;width:140px;vertical-align:top">{k}</td>
@@ -170,87 +151,71 @@ def _base_template(title: str, badge: str, badge_color: str, rows: list[tuple]) 
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr><td align="center" style="padding:40px 20px">
         <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-
-          <!-- Header -->
           <tr><td style="background:#0f172a;padding:32px 40px">
             <p style="margin:0 0 6px;color:#22d3ee;font-size:10px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase">Annika Technologies</p>
             <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:900;letter-spacing:-0.02em">{title}</h1>
           </td></tr>
-
-          <!-- Badge -->
           <tr><td style="padding:24px 40px 0">
             <span style="display:inline-block;background:{badge_color};color:#0f172a;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:5px 14px;border-radius:6px">{badge}</span>
           </td></tr>
-
-          <!-- Data rows -->
           <tr><td style="padding:16px 24px 8px">
             <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
               {rows_html}
             </table>
           </td></tr>
-
-          <!-- Footer -->
           <tr><td style="padding:24px 40px 32px;border-top:1px solid #f1f5f9;margin-top:16px">
             <p style="margin:0;color:#94a3b8;font-size:11px">
               Received at {datetime.utcnow().strftime("%d %b %Y, %H:%M UTC")} &nbsp;·&nbsp; Annika Technologies Production API
             </p>
           </td></tr>
-
         </table>
       </td></tr>
     </table>
     </body></html>
     """
 
-
 def contact_email_html(data: ContactInquiry) -> str:
     rows = [
-        ("Name",    data.user_name),
-        ("Email",   f'<a href="mailto:{data.user_email}" style="color:#0891b2">{data.user_email}</a>'),
+        ("Name", data.user_name),
+        ("Email", f'<a href="mailto:{data.user_email}" style="color:#0891b2">{data.user_email}</a>'),
         ("Company", data.company or "—"),
-        ("Phone",   data.phone    or "—"),
+        ("Phone", data.phone or "—"),
         ("Message", data.message),
     ]
     return _base_template("New Contact Inquiry", "Contact Form", "#cffafe", rows)
 
-
 def datasheet_email_html(data: DatasheetRequest) -> str:
     rows = [
-        ("Name",    data.user_name),
-        ("Email",   f'<a href="mailto:{data.user_email}" style="color:#0891b2">{data.user_email}</a>'),
+        ("Name", data.user_name),
+        ("Email", f'<a href="mailto:{data.user_email}" style="color:#0891b2">{data.user_email}</a>'),
         ("Company", data.company or "—"),
-        ("Phone",   data.phone   or "—"),
+        ("Phone", data.phone or "—"),
         ("Product", f"<strong>{data.product_title}</strong>"),
-        ("Notes",   data.message or "—"),
+        ("Notes", data.message or "—"),
     ]
     return _base_template("Datasheet Request", "Datasheet", "#d1fae5", rows)
 
-
 def custom_specs_email_html(data: CustomSpecsInquiry) -> str:
     rows = [
-        ("Name",         data.user_name),
-        ("Email",        f'<a href="mailto:{data.user_email}" style="color:#0891b2">{data.user_email}</a>'),
-        ("Phone",        data.phone       or "—"),
+        ("Name", data.user_name),
+        ("Email", f'<a href="mailto:{data.user_email}" style="color:#0891b2">{data.user_email}</a>'),
+        ("Phone", data.phone or "—"),
         ("Product Type", data.product_type),
-        ("Specs",        f"<pre style='margin:0;white-space:pre-wrap;font-size:12px'>{data.specs}</pre>"),
+        ("Specs", f"<pre style='margin:0;white-space:pre-wrap;font-size:12px'>{data.specs}</pre>"),
     ]
     return _base_template("Custom Specs Enquiry", "OEM / Custom", "#fef9c3", rows)
 
-
-# ─── 8. ENDPOINTS ─────────────────────────────────────────────────────────────
+# ─── 9. ENDPOINTS ─────────────────────────────────────────────────────────────
 @app.get("/health", tags=["System"])
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
-
 @app.get("/api/products", response_model=List[Product], tags=["Catalog"])
 async def get_products(category: Optional[str] = None):
-    """Return all products, optionally filtered by ?category=PCB+Assembly"""
     data = PRODUCTS_DB
     if category:
         data = [p for p in data if p["category"].lower() == category.lower()]
     return data
-
 
 @app.get("/api/products/{product_id}", response_model=Product, tags=["Catalog"])
 async def get_product(product_id: int):
@@ -259,66 +224,38 @@ async def get_product(product_id: int):
         raise HTTPException(status_code=404, detail="Product not found")
     return product
 
-
 @app.post("/api/contact", status_code=status.HTTP_201_CREATED, tags=["Inquiry"])
 async def submit_contact(inquiry: ContactInquiry):
-    """General contact form — sends email to sales@annika-technologies.com"""
     logger.info(f"[CONTACT] {inquiry.user_name} <{inquiry.user_email}>")
     sent = send_email(
-        subject   = f"[Contact] New inquiry from {inquiry.user_name}",
-        html_body = contact_email_html(inquiry),
-        reply_to  = inquiry.user_email,
+        subject=f"[Contact] New inquiry from {inquiry.user_name}",
+        html_body=contact_email_html(inquiry),
+        reply_to=inquiry.user_email,
     )
-    if not sent:
-        logger.warning("Email not sent — credentials may be missing.")
-    return {
-        "status":  "success",
-        "message": "Thank you. Our technical team will contact you shortly.",
-        "email_sent": sent,
-    }
-
+    return {"status": "success", "message": "Thank you. Our technical team will contact you shortly.", "email_sent": sent}
 
 @app.post("/api/datasheet", status_code=status.HTTP_201_CREATED, tags=["Inquiry"])
 async def request_datasheet(request: DatasheetRequest):
-    """Product datasheet request — sends email to sales@annika-technologies.com"""
     logger.info(f"[DATASHEET] {request.product_title} requested by {request.user_email}")
     sent = send_email(
-        subject   = f"[Datasheet] {request.product_title} — {request.user_name}",
-        html_body = datasheet_email_html(request),
-        reply_to  = request.user_email,
+        subject=f"[Datasheet] {request.product_title} — {request.user_name}",
+        html_body=datasheet_email_html(request),
+        reply_to=request.user_email,
     )
-    return {
-        "status":  "success",
-        "message": "Datasheet request received. We will send it within 24 hours.",
-        "email_sent": sent,
-    }
-
+    return {"status": "success", "message": "Datasheet request received. We will send it within 24 hours.", "email_sent": sent}
 
 @app.post("/api/custom-specs", status_code=status.HTTP_201_CREATED, tags=["Inquiry"])
 async def submit_custom_specs(inquiry: CustomSpecsInquiry):
-    """OEM / custom specification enquiry — sends email to sales@annika-technologies.com"""
     logger.info(f"[CUSTOM SPECS] {inquiry.product_type} from {inquiry.user_email}")
     sent = send_email(
-        subject   = f"[Custom Specs] {inquiry.product_type} — {inquiry.user_name}",
-        html_body = custom_specs_email_html(inquiry),
-        reply_to  = inquiry.user_email,
+        subject=f"[Custom Specs] {inquiry.product_type} — {inquiry.user_name}",
+        html_body=custom_specs_email_html(inquiry),
+        reply_to=inquiry.user_email,
     )
-    return {
-        "status":  "success",
-        "message": "Enquiry received. An engineer will reach out within 1 business day.",
-        "email_sent": sent,
-    }
+    return {"status": "success", "message": "Enquiry received. An engineer will reach out within 1 business day.", "email_sent": sent}
 
-
-# ─── 9. RUNNER ────────────────────────────────────────────────────────────────
+# ─── 10. RUNNER ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=False,
-        proxy_headers=True,
-        forwarded_allow_ips="*",
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False, proxy_headers=True, forwarded_allow_ips="*")
