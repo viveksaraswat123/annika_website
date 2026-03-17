@@ -10,7 +10,7 @@ import Facilities from "./pages/Facilities";
 import Contact from "./pages/Contact";
 
 // Admin Pages
-import AdminLogin from "./pages/AdminLogin"; 
+import AdminLogin from "./pages/Adminlogin"; 
 import Admin from "./pages/Admin";
 import AddProduct from "./pages/AddProduct";
 
