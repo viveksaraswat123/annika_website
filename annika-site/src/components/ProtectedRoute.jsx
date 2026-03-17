@@ -23,5 +23,5 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  return user ? children : <Navigate to="/admin/login" replace />;
+  return user ? children : <Navigate to="/admin-login" replace />;
 }

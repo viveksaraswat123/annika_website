@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 
@@ -55,7 +55,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── 5. Email Sending Function ───────────────────────────────────────────────
+# ─── 5. Helpers & Email Logic ────────────────────────────────────────────────
+def get_html_template(title: str, fields: dict) -> str:
+    """Generates a professional, branded HTML email body."""
+    rows = "".join([
+        f"<tr><td style='padding: 10px; border-bottom: 1px solid #eee; width: 150px;'><b>{k}:</b></td>"
+        f"<td style='padding: 10px; border-bottom: 1px solid #eee;'>{v}</td></tr>" 
+        for k, v in fields.items()
+    ])
+    
+    return f"""
+    <html>
+        <body style="font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0;">
+            <div style="max-width: 600px; margin: 20px auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="background-color: #1a3a5a; color: #ffffff; padding: 25px; text-align: center;">
+                    <h2 style="margin: 0; letter-spacing: 1px;">{title}</h2>
+                </div>
+                <div style="padding: 30px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        {rows}
+                    </table>
+                </div>
+                <div style="background-color: #f8f9fa; color: #666; padding: 15px; text-align: center; font-size: 12px; border-top: 1px solid #eee;">
+                    © {datetime.utcnow().year} Annika Technologies | Automated System Notification
+                </div>
+            </div>
+        </body>
+    </html>
+    """
+
 def send_email(subject: str, html_body: str, reply_to: str = "") -> bool:
     try:
         msg = MIMEMultipart("alternative")
@@ -77,15 +105,9 @@ def send_email(subject: str, html_body: str, reply_to: str = "") -> bool:
 
         logger.info(f"Email sent successfully | Subject: {subject}")
         return True
-
-    except smtplib.SMTPAuthenticationError:
-        logger.error("SMTP Authentication failed — check username/password")
-        return False
-
     except Exception as e:
         logger.error(f"Email send failed: {str(e)}")
         return False
-
 
 # ─── 6. Data Models ─────────────────────────────────────────────────────────
 class Product(BaseModel):
@@ -96,7 +118,6 @@ class Product(BaseModel):
     specs: dict
     in_stock: bool = True
 
-
 class ContactInquiry(BaseModel):
     user_name: str = Field(..., min_length=2, max_length=50)
     user_email: EmailStr
@@ -104,7 +125,6 @@ class ContactInquiry(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     message: str = Field(..., min_length=10, max_length=1000)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-
 
 class DatasheetRequest(BaseModel):
     user_name: str = Field(..., min_length=2, max_length=50)
@@ -115,7 +135,6 @@ class DatasheetRequest(BaseModel):
     message: Optional[str] = Field(None, max_length=1000)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-
 class CustomSpecsInquiry(BaseModel):
     user_name: str = Field(..., min_length=2, max_length=50)
     user_email: EmailStr
@@ -123,7 +142,6 @@ class CustomSpecsInquiry(BaseModel):
     product_type: str = Field(..., max_length=50)
     specs: str = Field(..., min_length=10, max_length=2000)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-
 
 # ─── 7. Mock Database ───────────────────────────────────────────────────────
 PRODUCTS_DB = [
@@ -153,12 +171,11 @@ PRODUCTS_DB = [
     },
 ]
 
-# ─── 8. Health Check ───────────────────────────────────────────────────────
+# ─── 8. System APIs ─────────────────────────────────────────────────────────
 @app.get("/", tags=["System"])
 @app.get("/health", tags=["System"])
 async def health_check():
     return {"status": "running", "timestamp": datetime.utcnow()}
-
 
 # ─── 9. Product APIs ───────────────────────────────────────────────────────
 @app.get("/api/products", response_model=List[Product], tags=["Catalog"])
@@ -168,7 +185,6 @@ async def get_products(category: Optional[str] = None):
         data = [p for p in data if p["category"].lower() == category.lower()]
     return data
 
-
 @app.get("/api/products/{product_id}", response_model=Product, tags=["Catalog"])
 async def get_product(product_id: int):
     product = next((p for p in PRODUCTS_DB if p["id"] == product_id), None)
@@ -176,60 +192,48 @@ async def get_product(product_id: int):
         raise HTTPException(status_code=404, detail="Product not found")
     return product
 
-
-# ─── 10. Inquiry APIs ───────────────────────────────────────────────────────
+# ─── 10. Inquiry APIs (Refactored) ──────────────────────────────────────────
 @app.post("/api/contact", status_code=status.HTTP_201_CREATED, tags=["Inquiry"])
-async def submit_contact(inquiry: ContactInquiry):
-    sent = send_email(
-        subject=f"[Contact] {inquiry.user_name}",
-        html_body=f"""
-        <b>Name:</b> {inquiry.user_name}<br>
-        <b>Email:</b> {inquiry.user_email}<br>
-        <b>Message:</b> {inquiry.message}
-        """,
-        reply_to=inquiry.user_email,
-    )
-    return {"status": "success", "email_sent": sent}
-
+async def submit_contact(inquiry: ContactInquiry, background_tasks: BackgroundTasks):
+    fields = {
+        "Name": inquiry.user_name,
+        "Email": inquiry.user_email,
+        "Company": inquiry.company or "N/A",
+        "Phone": inquiry.phone or "N/A",
+        "Message": inquiry.message
+    }
+    html_content = get_html_template("New Contact Inquiry", fields)
+    background_tasks.add_task(send_email, f"[Contact] {inquiry.user_name}", html_content, inquiry.user_email)
+    return {"status": "success", "message": "Contact request received"}
 
 @app.post("/api/datasheet", status_code=status.HTTP_201_CREATED, tags=["Inquiry"])
-async def request_datasheet(request: DatasheetRequest):
-    sent = send_email(
-        subject=f"[Datasheet] {request.product_title}",
-        html_body=f"""
-        <b>Name:</b> {request.user_name}<br>
-        <b>Email:</b> {request.user_email}<br>
-        <b>Product:</b> {request.product_title}
-        """,
-        reply_to=request.user_email,
-    )
-    return {"status": "success", "email_sent": sent}
-
+async def request_datasheet(request: DatasheetRequest, background_tasks: BackgroundTasks):
+    fields = {
+        "Name": request.user_name,
+        "Email": request.user_email,
+        "Product": request.product_title,
+        "Company": request.company or "N/A",
+        "Phone": request.phone or "N/A"
+    }
+    html_content = get_html_template("Datasheet Request", fields)
+    background_tasks.add_task(send_email, f"[Datasheet] {request.product_title}", html_content, request.user_email)
+    return {"status": "success", "message": "Datasheet request received"}
 
 @app.post("/api/custom-specs", status_code=status.HTTP_201_CREATED, tags=["Inquiry"])
-async def submit_custom_specs(inquiry: CustomSpecsInquiry):
-    sent = send_email(
-        subject=f"[Custom Specs] {inquiry.product_type}",
-        html_body=f"""
-        <b>Name:</b> {inquiry.user_name}<br>
-        <b>Email:</b> {inquiry.user_email}<br>
-        <b>Specs:</b> {inquiry.specs}
-        """,
-        reply_to=inquiry.user_email,
-    )
-    return {"status": "success", "email_sent": sent}
-
+async def submit_custom_specs(inquiry: CustomSpecsInquiry, background_tasks: BackgroundTasks):
+    fields = {
+        "Name": inquiry.user_name,
+        "Email": inquiry.user_email,
+        "Phone": inquiry.phone or "N/A",
+        "Product Type": inquiry.product_type,
+        "Specifications": f"<div style='white-space: pre-wrap;'>{inquiry.specs}</div>"
+    }
+    html_content = get_html_template("Custom Specs Inquiry", fields)
+    background_tasks.add_task(send_email, f"[Custom Specs] {inquiry.product_type}", html_content, inquiry.user_email)
+    return {"status": "success", "message": "Specification inquiry received"}
 
 # ─── 11. Run Server ─────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
-
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=False,
-        proxy_headers=True,
-        forwarded_allow_ips="*",
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False, proxy_headers=True, forwarded_allow_ips="*")

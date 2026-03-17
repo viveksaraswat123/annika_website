@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Mail, Send, CheckCircle2 } from "lucide-react";
-import axios from "axios"; // Ensure you run 'npm install axios'
+import { MapPin, Phone, Mail, Send, CheckCircle2, Building2, Smartphone } from "lucide-react";
+import axios from "axios";
 
-// Configuration for API
-const API_BASE_URL = "https://annikawebsite-production.up.railway.app"; // Update with your FastAPI URL
+// Configuration for API - Update this if your production URL changes
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 export default function Contact() {
   const formRef = useRef();
@@ -17,26 +17,30 @@ export default function Contact() {
     setIsSubmitting(true);
     setError(null);
 
-    // Extract data from form
+    // Matches the ContactInquiry Pydantic model in your FastAPI backend
     const formData = {
       user_name: formRef.current.user_name.value,
       user_email: formRef.current.user_email.value,
+      company: formRef.current.company.value || null,
+      phone: formRef.current.phone.value || null,
       message: formRef.current.message.value,
     };
 
     try {
-      // API call to FastAPI
       const response = await axios.post(`${API_BASE_URL}/api/contact`, formData);
 
-      if (response.status === 200 || response.status === 201) {
+      if (response.status === 201 || response.status === 200) {
         setIsSent(true);
         formRef.current.reset();
-        // Hide success message after 5 seconds
+        // Reset success state after 5 seconds to allow new submissions
         setTimeout(() => setIsSent(false), 5000);
       }
     } catch (err) {
       console.error("Submission Error:", err);
-      setError("Unable to reach the server. Please check your connection.");
+      const errorMessage = err.response?.data?.detail 
+        ? (typeof err.response.data.detail === 'string' ? err.response.data.detail : "Validation Error")
+        : "Unable to reach the engineering hub. Please check your connection.";
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +51,7 @@ export default function Contact() {
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           
-          {/* Information Side (Detailed from PDF) */}
+          {/* Information Side */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -85,7 +89,7 @@ export default function Contact() {
             </div>
           </motion.div>
 
-          {/* Form Side with API Feedback */}
+          {/* Form Side */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -104,17 +108,17 @@ export default function Contact() {
               </motion.div>
             )}
 
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="p-4 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100">
                   {error}
                 </div>
               )}
               
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
-                  <input name="user_name" type="text" placeholder= "Your Name" required
+                  <input name="user_name" type="text" placeholder="Your Name" required
                     className="w-full bg-slate-50 border-none rounded-xl p-4 text-slate-900 focus:ring-2 focus:ring-cyan-500 transition-all outline-none" />
                 </div>
                 <div className="space-y-2">
@@ -124,9 +128,26 @@ export default function Contact() {
                 </div>
               </div>
 
+              <div className="grid md:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1">
+                    <Smartphone size={10}/> Phone (Optional)
+                  </label>
+                  <input name="phone" type="tel" placeholder="+91 ..."
+                    className="w-full bg-slate-50 border-none rounded-xl p-4 text-slate-900 focus:ring-2 focus:ring-cyan-500 transition-all outline-none" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1">
+                    <Building2 size={10}/> Company (Optional)
+                  </label>
+                  <input name="company" type="text" placeholder="Company Name"
+                    className="w-full bg-slate-50 border-none rounded-xl p-4 text-slate-900 focus:ring-2 focus:ring-cyan-500 transition-all outline-none" />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Message</label>
-                <textarea name="message" rows="5" placeholder="Describe your technical requirements (e.g., PCB Type, Wire Harness Specs)..." required
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Technical Requirements</label>
+                <textarea name="message" rows="4" placeholder="Describe your technical requirements (e.g., PCB Type, Wire Harness Specs)..." required
                   className="w-full bg-slate-50 border-none rounded-xl p-4 text-slate-900 focus:ring-2 focus:ring-cyan-500 transition-all outline-none resize-none" />
               </div>
 
