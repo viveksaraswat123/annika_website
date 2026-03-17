@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Cpu, Cable, Lightbulb, ArrowRight, Settings2, X, CheckCircle } from "lucide-react";
+import { Cpu, Cable, Lightbulb, ArrowRight, Settings2, X, CheckCircle, Loader2 } from "lucide-react";
+import { requestDatasheet, submitCustomSpecs } from "../apis"; // ← adjust path if needed
 
 const categories = ["All", "PCB Assembly", "Wire Harness", "Indicators"];
 
@@ -53,7 +54,9 @@ function CategoryIcon({ category, size = 120 }) {
 function DatasheetModal({ product, onClose }) {
   const [form, setForm] = useState({ name: "", company: "", email: "", phone: "", message: "" });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   const validate = () => {
     const e = {};
@@ -62,10 +65,27 @@ function DatasheetModal({ product, onClose }) {
     return e;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
-    setSubmitted(true);
+
+    setLoading(true);
+    setServerError("");
+    try {
+      await requestDatasheet({
+        user_name:     form.name,
+        user_email:    form.email,
+        company:       form.company  || undefined,
+        phone:         form.phone    || undefined,
+        product_title: product.title,
+        message:       form.message  || undefined,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setServerError(err.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,7 +93,8 @@ function DatasheetModal({ product, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm"
+      // ── FIX: pt-20 pushes the scrollable area below the fixed navbar ──
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 pb-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -81,10 +102,11 @@ function DatasheetModal({ product, onClose }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-[2rem] w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
+        // ── FIX: my-auto centres it vertically but keeps it scrollable ──
+        className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl"
       >
         {/* Image header */}
-        <div className="relative h-52 rounded-t-[2rem] overflow-hidden bg-slate-100">
+        <div className="relative h-52 rounded-t-[2rem] overflow-hidden bg-slate-100 flex-shrink-0">
           <img
             src={product.image}
             alt={product.title}
@@ -208,11 +230,23 @@ function DatasheetModal({ product, onClose }) {
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-cyan-400 transition-colors resize-none mb-4"
               />
 
+              {/* Server error */}
+              {serverError && (
+                <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
+                  ⚠ {serverError}
+                </p>
+              )}
+
               <button
                 onClick={handleSubmit}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-cyan-500 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300"
+                disabled={loading}
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-cyan-500 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Send Request →
+                {loading ? (
+                  <><Loader2 size={14} className="animate-spin" /> Sending…</>
+                ) : (
+                  "Send Request →"
+                )}
               </button>
             </div>
           )}
@@ -226,19 +260,38 @@ function DatasheetModal({ product, onClose }) {
 function EnquiryModal({ onClose }) {
   const [form, setForm] = useState({ name: "", email: "", phone: "", type: "PCB Assembly", specs: "" });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Required";
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) e.email = "Valid email required";
+    if (!form.specs.trim()) e.specs = "Please describe your requirements";
     return e;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
-    setSubmitted(true);
+
+    setLoading(true);
+    setServerError("");
+    try {
+      await submitCustomSpecs({
+        user_name:    form.name,
+        user_email:   form.email,
+        phone:        form.phone || undefined,
+        product_type: form.type,
+        specs:        form.specs,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setServerError(err.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -246,7 +299,8 @@ function EnquiryModal({ onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm"
+      // ── FIX: same navbar offset + scrollable overlay ──
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 pb-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -337,19 +391,35 @@ function EnquiryModal({ onClose }) {
               <option>Other</option>
             </select>
 
-            <textarea
-              placeholder="Describe voltage ratings, dimensions, quantities, certifications needed..."
-              rows={4}
-              value={form.specs}
-              onChange={(e) => setForm({ ...form, specs: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-cyan-400 transition-colors resize-none"
-            />
+            <div>
+              <textarea
+                placeholder="Describe voltage ratings, dimensions, quantities, certifications needed..."
+                rows={4}
+                value={form.specs}
+                onChange={(e) => setForm({ ...form, specs: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors resize-none
+                  ${errors.specs ? "border-red-400 bg-red-50" : "border-slate-200 focus:border-cyan-400"}`}
+              />
+              {errors.specs && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.specs}</p>}
+            </div>
+
+            {/* Server error */}
+            {serverError && (
+              <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                ⚠ {serverError}
+              </p>
+            )}
 
             <button
               onClick={handleSubmit}
-              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-cyan-500 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300"
+              disabled={loading}
+              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-cyan-500 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Submit Enquiry →
+              {loading ? (
+                <><Loader2 size={14} className="animate-spin" /> Submitting…</>
+              ) : (
+                "Submit Enquiry →"
+              )}
             </button>
           </div>
         )}
@@ -371,7 +441,7 @@ export default function Products() {
   return (
     <div className="bg-white min-h-screen selection:bg-cyan-500 selection:text-white">
 
-      {/* ── Modals (wrapped in AnimatePresence for exit animations) ── */}
+      {/* ── Modals ── */}
       <AnimatePresence>
         {selectedProduct && (
           <DatasheetModal
@@ -518,7 +588,6 @@ export default function Products() {
                           e.target.nextSibling.style.display = "flex";
                         }}
                       />
-                      {/* Icon fallback */}
                       <div className="hidden absolute inset-0 w-full h-full items-center justify-center text-slate-300">
                         <CategoryIcon category={item.category} size={120} />
                       </div>

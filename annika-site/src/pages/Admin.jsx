@@ -1,7 +1,7 @@
 // src/pages/AdminLogin.jsx
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
+// import { signInWithEmailAndPassword } from "../src/firebase";
+// import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, Mail, Eye, EyeOff, AlertCircle } from "lucide-react";

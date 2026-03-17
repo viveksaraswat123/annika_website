@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer"; // Assuming you have a Footer component
 import { motion } from "framer-motion";
+const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
 
 export default function Layout() {
   return (
@@ -15,7 +16,7 @@ export default function Layout() {
 
       {/* --- GLOBAL WHATSAPP BUTTON --- */}
       <motion.a
-        href="https://wa.me/918708591236"
+        href={`https://wa.me/${phoneNumber}`}
         target="_blank"
         rel="noopener noreferrer"
         initial={{ scale: 0, opacity: 0 }}
