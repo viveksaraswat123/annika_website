@@ -15,7 +15,7 @@ export default function Layout() {
 
       {/* --- GLOBAL WHATSAPP BUTTON --- */}
       <motion.a
-        href="https://wa.me/918059944659"
+        href="https://wa.me/918708591236"
         target="_blank"
         rel="noopener noreferrer"
         initial={{ scale: 0, opacity: 0 }}
