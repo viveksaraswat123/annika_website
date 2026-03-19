@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
-import Footer from "./Footer"; // Assuming you have a Footer component
+import Footer from "./Footer"; 
 import { motion } from "framer-motion";
 const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
 

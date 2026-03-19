@@ -2,14 +2,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Public Pages
+//Public Pages
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Products from "./pages/Products";
 import Facilities from "./pages/Facilities";
 import Contact from "./pages/Contact";
 
-// Admin Pages - Uncommented and path verified
+//Admin Pages
 import AdminLogin from "./pages/AdminLogin"; 
 import Admin from "./pages/Admin";
 import AddProduct from "./pages/AddProduct";

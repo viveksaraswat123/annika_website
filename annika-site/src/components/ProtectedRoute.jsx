@@ -1,4 +1,3 @@
-// src/components/ProtectedRoute.jsx — no Firebase needed
 import { Navigate } from "react-router-dom";
 import { isLoggedIn } from "../auth";
 

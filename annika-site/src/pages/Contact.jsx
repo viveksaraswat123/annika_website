@@ -3,8 +3,7 @@ import { motion } from "framer-motion";
 import { MapPin, Phone, Mail, Send, CheckCircle2, Building2, Smartphone } from "lucide-react";
 import axios from "axios";
 
-// Configuration for API - Update this if your production URL changes
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function Contact() {
   const formRef = useRef();

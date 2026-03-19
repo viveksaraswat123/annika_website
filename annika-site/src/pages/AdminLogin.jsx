@@ -1,4 +1,4 @@
-// src/pages/AdminLogin.jsx — no Firebase
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
