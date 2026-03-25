@@ -177,3 +177,13 @@ function ContactInfo({ icon, title, detail }) {
     </div>
   );
 }
+
+export const metadata = {
+  title: "Contact Annika Technologies",
+  description: "Get in touch for PCB assembly and manufacturing solutions",
+  openGraph: {
+    title: "Contact Annika Technologies",
+    description: "Discuss your requirements with our engineering team",
+    images: ["https://www.annika-technologies.com/contact-preview.jpg"],
+  },
+};

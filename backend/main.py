@@ -21,15 +21,15 @@ from jose import JWTError, jwt
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# ─── 0. Load .env ─────────────────────────────────────────────────────────────
+
 load_dotenv()
 
-# ─── 1. Logging ───────────────────────────────────────────────────────────────
+
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
 logger = logging.getLogger(__name__)
 
-# ─── 2. Config & Validation ───────────────────────────────────────────────────
+
 SMTP_USER        = os.getenv("SMTP_USER")
 SMTP_PASS        = os.getenv("SMTP_PASS")
 SALES_EMAIL      = os.getenv("SALES_EMAIL")
@@ -46,14 +46,14 @@ if missing:
     logger.critical(f"Missing env vars: {', '.join(missing)}. Exiting.")
     sys.exit(1)
 
-# ─── 3. Cloudinary Setup ──────────────────────────────────────────────────────
+
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD,
     api_key=CLOUDINARY_KEY,
     api_secret=CLOUDINARY_SEC,
 )
 
-# ─── 4. Auth Helpers ──────────────────────────────────────────────────────────
+
 bearer = HTTPBearer()
 
 def create_token(email: str) -> str:
@@ -67,7 +67,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-# ─── 5. FastAPI App ───────────────────────────────────────────────────────────
+
 app = FastAPI(
     title="Annika Technologies API",
     description="Production API — MongoDB + JWT + Cloudinary",
@@ -89,13 +89,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── 6. MongoDB Connection ────────────────────────────────────────────────────
+
 client        = AsyncIOMotorClient(MONGO_URI)
 db_           = client["annika_db"]
 products_col  = db_["products"]
 inquiries_col = db_["inquiries"]
 
-# ─── 7. Email Helpers ─────────────────────────────────────────────────────────
+
 def get_html_template(title: str, fields: dict) -> str:
     rows = "".join([
         f"<tr><td style='padding:10px;border-bottom:1px solid #eee;width:150px'><b>{k}:</b></td>"
@@ -136,7 +136,7 @@ def send_email(subject: str, html_body: str, reply_to: str = "") -> bool:
         logger.error(f"Email failed: {e}")
         return False
 
-# ─── 8. Pydantic Models ───────────────────────────────────────────────────────
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -173,7 +173,6 @@ class CustomSpecsInquiry(BaseModel):
     product_type: str      = Field(..., max_length=50)
     specs:        str      = Field(..., min_length=10, max_length=2000)
 
-# ─── 9. Helper: serialize MongoDB doc ────────────────────────────────────────
 class MongoJSONEncoder(json.JSONEncoder):
     """Custom JSON encoder that handles ObjectId and datetime from MongoDB."""
     def default(self, obj):
@@ -204,13 +203,13 @@ def mongo_response(data) -> JSONResponse:
     """Safely encode a list or dict containing MongoDB data to a JSONResponse."""
     return JSONResponse(content=json.loads(json.dumps(data, cls=MongoJSONEncoder)))
 
-# ─── 10. System Routes ────────────────────────────────────────────────────────
+
 @app.get("/", tags=["System"])
 @app.get("/health", tags=["System"])
 async def health():
     return {"status": "running", "version": "2.0.0", "timestamp": datetime.utcnow().isoformat()}
 
-# ─── 11. Auth Routes ──────────────────────────────────────────────────────────
+
 @app.post("/auth/login", tags=["Auth"])
 async def login(body: LoginRequest):
     if body.email != ADMIN_EMAIL or body.password != ADMIN_PASS:
@@ -218,7 +217,7 @@ async def login(body: LoginRequest):
     token = create_token(body.email)
     return {"access_token": token, "token_type": "bearer"}
 
-# ─── 12. Product Routes ───────────────────────────────────────────────────────
+
 @app.get("/api/products", tags=["Catalog"])
 async def get_products(category: Optional[str] = None):
     query = {}
@@ -257,7 +256,7 @@ async def delete_product(product_id: str, _: str = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="Product not found")
     return {"status": "deleted"}
 
-# ─── 13. Image Upload (Cloudinary) ───────────────────────────────────────────
+#Image Upload (Cloudinary)
 @app.post("/api/upload", tags=["Media"])
 async def upload_image(file: UploadFile = File(...), _: str = Depends(verify_token)):
     try:
@@ -292,7 +291,7 @@ async def upload_image(file: UploadFile = File(...), _: str = Depends(verify_tok
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
-# ─── 14. Inquiry Routes ───────────────────────────────────────────────────────
+#Inquiry Routes
 @app.get("/api/inquiries", tags=["Inquiry"])
 async def get_inquiries(_: str = Depends(verify_token)):
     cursor = inquiries_col.find().sort("timestamp", -1)
@@ -357,7 +356,7 @@ async def submit_custom_specs(inquiry: CustomSpecsInquiry, bg: BackgroundTasks):
     bg.add_task(send_email, f"[Custom Specs] {inquiry.product_type}", html, inquiry.user_email)
     return {"status": "success"}
 
-# ─── 15. Debug Route ──────────────────────────────────────────────────────────
+#Debug Route
 @app.get("/debug-db", tags=["System"])
 async def debug_db():
     try:
@@ -366,7 +365,6 @@ async def debug_db():
     except Exception as e:
         return {"error": str(e)}
 
-# ─── 16. Run ──────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
