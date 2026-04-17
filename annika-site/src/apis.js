@@ -4,8 +4,7 @@ import axios from 'axios';
  * Vite statically replaces 'import.meta.env.VITE_API_URL'
  * during the build process.
  */
-// const BASE_URL = "https://annikawebsite-production.up.railway.app";
-const BASE_URL = "http://127.0.0.1:8000/";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 console.log("Connecting to Backend at:", BASE_URL);
 
