@@ -5,7 +5,13 @@ import { requestDatasheet, submitCustomSpecs } from "../apis";
 
 const API = import.meta.env.VITE_API_URL;
 
-const categories = ["All", "PCB Assembly", "Wire Harness", "Industrial Indicators"];
+const categories = [
+  "All",
+  "PCB Assembly",
+  "Wire Harness",
+  "Electrical Accessories",
+  "Industrial Indicators",
+];
 
 // ─── Hardcoded fallback products ──────────────────────────────────────────────
 const STATIC_PRODUCTS = [
@@ -54,6 +60,23 @@ const STATIC_PRODUCTS = [
     specs: { "Current": "20A", "Stability": "High", "Usage": "OEM", "Package": "Packet" },
     in_stock: true,
   },
+  {
+  id: "static-6",
+  category: "Electrical Accessories",
+  title: "2 Pin AC Power Cord",
+  short_desc: "Durable 2 pin AC power cord for electrical and PCB applications.",
+  desc: "High-quality 2 Pin AC Power Cord suitable for LED drivers, adapters, PCB assemblies, industrial electronics, and electrical devices. Built with durable insulation and flexible copper wiring for reliable long-term performance.",
+  image: "images/ac-cord-white.webp",
+
+  specs: {
+    "Plug Type": "2 Pin",
+    "Wire Type": "Twin Core",
+    "Material": "Copper",
+    "Color": "White",
+  },
+
+  in_stock: true,
+},
 ];
 
 function CategoryIcon({ category, size = 120 }) {
@@ -331,7 +354,7 @@ function ProductCard({ item, onSelect }) {
       key={item.id || item.title}
       className="group bg-white rounded-[2.5rem] border border-slate-100 p-2 hover:shadow-2xl hover:border-cyan-100 transition-all duration-500"
     >
-      <div className="relative overflow-hidden rounded-[2rem] h-72 bg-slate-100">
+      <div className="relative overflow-hidden rounded-[2rem] h-64 bg-slate-100">
         <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors z-10" />
         {item.image ? (
           <img src={item.image} alt={item.title}
