@@ -47,7 +47,7 @@ const STATIC_PRODUCTS = [
     category: "Industrial Indicators",
     title: "LED Neon Indicator",
     desc: "High-visibility control panel indicators featuring low-wattage consumption and universal mounting.",
-    image: "images/p4.webp",
+    image: "images/led-4.jpg",
     specs: { "Voltage": "24V DC", "Mounting": "22.5 mm", "Body": "Plastic", "Wattage": "12-24V" },
     in_stock: true,
   },
@@ -66,17 +66,80 @@ const STATIC_PRODUCTS = [
   title: "2 Pin AC Power Cord",
   short_desc: "Durable 2 pin AC power cord for electrical and PCB applications.",
   desc: "High-quality 2 Pin AC Power Cord suitable for LED drivers, adapters, PCB assemblies, industrial electronics, and electrical devices. Built with durable insulation and flexible copper wiring for reliable long-term performance.",
-  image: "images/ac-cord-white.webp",
+  image: "images/ac-cord-white.png",
 
   specs: {
     "Plug Type": "2 Pin",
     "Wire Type": "Twin Core",
     "Material": "Copper",
-    "Color": "White",
+    "Color": "Black and White",
   },
 
   in_stock: true,
 },
+{
+  id: "static-7",
+  category: "Electrical Accessories",
+  title: "Multi Wire Harness Assembly",
+
+  short_desc:
+    "Industrial multi-core wire harness assembly for PCB and electrical systems.",
+
+  desc:
+    "High-quality multi-wire harness assembly designed for PCB integration, industrial machinery, electrical control systems, and OEM applications. Built using durable insulated copper wires with reliable connector locking.",
+
+  image: "images/wire-harness.png",
+
+  specs: {
+    "Connector Type": "Multi Pin",
+    "Wire Material": "Copper",
+    "Application": "Industrial Electronics",
+    "Insulation": "PVC",
+  },
+
+  in_stock: true,
+},
+
+{
+  id: "static-8",
+  category: "Electrical Accessories",
+
+  title: "Rocker Switch Connector",
+
+  short_desc:
+    "Heavy-duty rocker switch assembly with connector wiring.",
+
+  desc:
+    "Premium rocker switch connector assembly suitable for industrial control panels, power switching systems, electronic equipment, and electrical devices. Designed for stable connectivity and long operational life.",
+
+  image: "images/rocker-switch.png",
+
+  specs: {
+    "Switch Type": "Rocker",
+    "Connector": "2 Pin",
+    "Material": "ABS Plastic",
+    "Application": "Power Control",
+  },
+
+  in_stock: true,
+},
+// {
+//   id: "static-6",
+//   category: "Electrical Accessories",
+//   title: "2 Pin AC Power Cord",
+//   short_desc: "Durable 2 pin AC power cord for electrical and PCB applications.",
+//   desc: "High-quality 2 Pin AC Power Cord suitable for LED drivers, adapters, PCB assemblies, industrial electronics, and electrical devices. Built with durable insulation and flexible copper wiring for reliable long-term performance.",
+//   image: "images/ac-cord-black.png",
+
+//   specs: {
+//     "Plug Type": "2 Pin",
+//     "Wire Type": "Twin Core",
+//     "Material": "Copper",
+//     "Color": "Black",
+//   },
+
+//   in_stock: true,
+// },
 ];
 
 function CategoryIcon({ category, size = 120 }) {
@@ -354,12 +417,25 @@ function ProductCard({ item, onSelect }) {
       key={item.id || item.title}
       className="group bg-white rounded-[2.5rem] border border-slate-100 p-2 hover:shadow-2xl hover:border-cyan-100 transition-all duration-500"
     >
-      <div className="relative overflow-hidden rounded-[2rem] h-64 bg-slate-100">
+      <div className="relative overflow-hidden rounded-[2rem] h-64 bg-white border border-slate-100">
         <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors z-10" />
         {item.image ? (
-          <img src={item.image} alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} />
+          <img
+  src={item.image}
+  alt={item.title}
+  className={`w-full h-full transition-transform duration-500 group-hover:scale-105 ${
+    item.title === "2 Pin AC Power Cord" ||
+    item.title === "Multi Wire Harness Assembly" ||
+    item.title === "LED Neon Indicator" ||
+    item.title === "Rocker Switch Connector"
+      ? "object-contain bg-white p-6"
+      : "object-cover"
+  }`}
+  onError={(e) => {
+    e.target.style.display = "none";
+    e.target.nextSibling.style.display = "flex";
+  }}
+/>
         ) : null}
         <div className={`${item.image ? "hidden" : "flex"} absolute inset-0 w-full h-full items-center justify-center text-slate-300`}>
           <CategoryIcon category={item.category} size={120} />
@@ -367,8 +443,10 @@ function ProductCard({ item, onSelect }) {
       </div>
       <div className="p-6 pt-8">
         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-600 mb-2 block">{item.category}</span>
-        <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tighter">{item.title}</h3>
-        <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium">{item.desc}</p>
+        <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tighter">{item.title}</h3>
+       <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium line-clamp-2">
+          {item.short_desc || item.desc}
+      </p>
         {item.specs && Object.keys(item.specs).length > 0 && (
           <div className="bg-slate-50 rounded-2xl p-6 mb-6 space-y-3 border border-slate-100">
             {Object.entries(item.specs).map(([key, val]) => (
