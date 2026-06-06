@@ -160,7 +160,7 @@
 //               Annika Technologies is an Indiamart-verified manufacturer
 //               dedicated to the{" "}
 //               <span className="text-slate-800 font-semibold">Made in India</span>{" "}
-//               vision — delivering precision-engineered electronic assemblies to
+//               vision - delivering precision-engineered electronic assemblies to
 //               industrial clients across India.
 //             </p>
 
@@ -180,7 +180,7 @@
 //             </div>
 //           </motion.div>
 
-//           {/* Right — image + floating stat cards */}
+//           {/* Right - image + floating stat cards */}
 //           <motion.div
 //             initial={{ opacity: 0, x: 30 }}
 //             animate={{ opacity: 1, x: 0 }}
@@ -264,7 +264,7 @@
 //             <p className="text-slate-500 text-base leading-relaxed">
 //               From PCB assemblies to custom wire harnesses and industrial
 //               indicators, every product leaves our facility having passed
-//               rigorous quality checks — because our clients depend on parts
+//               rigorous quality checks - because our clients depend on parts
 //               that simply cannot fail.
 //             </p>
 //           </motion.div>
@@ -347,7 +347,7 @@
 //               What We Build
 //             </h2>
 //             <p className="text-slate-400 text-base leading-relaxed">
-//               A full spectrum of precision manufacturing capabilities — from
+//               A full spectrum of precision manufacturing capabilities - from
 //               surface mount PCB work to large-scale wire harness production.
 //             </p>
 //           </motion.div>
@@ -600,7 +600,7 @@ export default function About() {
               Annika Technologies is an Indiamart-verified manufacturer
               dedicated to the{" "}
               <span className="text-slate-800 font-semibold">Made in India</span>{" "}
-              vision — delivering precision-engineered electronic assemblies to
+              vision - delivering precision-engineered electronic assemblies to
               industrial clients across India.
             </p>
 
@@ -620,7 +620,7 @@ export default function About() {
             </div>
           </motion.div>
 
-          {/* Right — image + floating stat cards */}
+          {/* Right - image + floating stat cards */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -704,7 +704,7 @@ export default function About() {
             <p className="text-slate-500 text-base leading-relaxed">
               From PCB assemblies to custom wire harnesses and industrial
               indicators, every product leaves our facility having passed
-              rigorous quality checks — because our clients depend on parts
+              rigorous quality checks - because our clients depend on parts
               that simply cannot fail.
             </p>
           </motion.div>
@@ -787,7 +787,7 @@ export default function About() {
               What We Build
             </h2>
             <p className="text-slate-400 text-base leading-relaxed">
-              A full spectrum of precision manufacturing capabilities — from
+              A full spectrum of precision manufacturing capabilities - from
               surface mount PCB work to large-scale wire harness production.
             </p>
           </motion.div>
