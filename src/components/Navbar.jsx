@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useScroll } from "framer-motion";
-import { Menu, X, ArrowUpRight, ChevronRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, ChevronRight, Phone, Mail, MapPin } from "lucide-react";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -38,17 +38,36 @@ export default function Navbar() {
 
   return (
     <>
+      {/* Top Contact Bar */}
+      <div className="fixed top-0 left-0 right-0 z-[101] bg-slate-950 text-slate-400 text-[11px] font-medium hidden md:block">
+        <div className="max-w-7xl mx-auto px-6 h-9 flex items-center justify-end gap-6">
+          <a href="tel:+918059944659" className="flex items-center gap-2 hover:text-cyan-400 transition-colors">
+            <Phone size={12} /> +91 80599 44659
+          </a>
+          <a href="mailto:annikatechnologies@gmail.com" className="flex items-center gap-2 hover:text-cyan-400 transition-colors">
+            <Mail size={12} /> annikatechnologies@gmail.com
+          </a>
+          <span className="flex items-center gap-2">
+            <MapPin size={12} /> Kalka, Haryana, India
+          </span>
+        </div>
+      </div>
+
       {/* Scroll Progress Bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-[3px] bg-cyan-500 z-[120] origin-left"
+        className="fixed top-9 left-0 right-0 h-[3px] bg-cyan-500 z-[120] origin-left hidden md:block"
+        style={{ scaleX: scrollYProgress }}
+      />
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-[3px] bg-cyan-500 z-[120] origin-left md:hidden"
         style={{ scaleX: scrollYProgress }}
       />
 
       <nav
-        className={`fixed w-full z-[100] transition-all duration-500 ease-in-out ${
+        className={`fixed w-full z-[100] transition-all duration-500 ease-in-out top-0 md:top-9 border-b ${
           scrolled || isInternalPage || open
-            ? "bg-white/95 backdrop-blur-xl py-3 shadow-lg border-b border-slate-100"
-            : "bg-transparent py-6"
+            ? "bg-white/95 backdrop-blur-xl py-3 shadow-lg border-slate-100"
+            : "bg-transparent py-6 border-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">

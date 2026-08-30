@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Cpu, Cable, Lightbulb, ArrowRight, Settings2, X, CheckCircle, Loader2 } from "lucide-react";
+import { Cpu, Cable, Lightbulb, ArrowRight, Settings2, X, CheckCircle, Loader2, Download } from "lucide-react";
 import { requestDatasheet, submitCustomSpecs } from "../apis";
 
 const API = import.meta.env.VITE_API_URL;
@@ -790,6 +790,20 @@ export default function Products() {
             <span className="text-sm font-black text-slate-900">{filteredItems.length}</span>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400"> / {allProducts.length} Products</span>
           </div>
+
+          <a
+            href="/downloads/Annika-Technologies-Catalogue.pdf"
+            download
+            className="flex items-center gap-4 p-6 bg-slate-900 rounded-3xl hover:bg-slate-800 transition-colors group"
+          >
+            <div className="w-11 h-11 rounded-2xl bg-cyan-500/15 flex items-center justify-center shrink-0">
+              <Download size={18} className="text-cyan-400" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm">Download Catalogue</p>
+              <p className="text-slate-400 text-xs">Full product PDF</p>
+            </div>
+          </a>
 
           <div className="p-6 bg-cyan-50 rounded-3xl border border-cyan-100">
             <Settings2 className="text-cyan-600 mb-4" />

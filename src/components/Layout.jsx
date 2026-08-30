@@ -22,7 +22,7 @@ export default function Layout() {
       <Navbar />
       
       {/* The Outlet renders whatever page the user is currently visiting */}
-      <main className="flex-grow">
+      <main className="flex-grow md:mt-9">
         <Outlet />
       </main>
 

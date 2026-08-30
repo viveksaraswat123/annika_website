@@ -1,6 +1,13 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Cpu, ShieldCheck, Factory, Zap, Award, Globe, Building2 } from "lucide-react";
+import { ArrowRight, Cpu, Settings, ShieldCheck, Truck, Factory, Award, Globe, Building2, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const HERO_FEATURES = [
+  { icon: <Cpu size={22} />, label: "Wide Range of Components" },
+  { icon: <Settings size={22} />, label: "Advanced Manufacturing" },
+  { icon: <ShieldCheck size={22} />, label: "Quality Assurance" },
+  { icon: <Truck size={22} />, label: "On-Time Delivery" },
+];
 
 const CLIENTS = [
   "Nipa International", "JSK International", "JSK Electricals", "V-Guard",
@@ -23,86 +30,65 @@ export default function Home() {
   return (
     <div className="bg-white selection:bg-cyan-500 selection:text-white">
       {/* --- HERO SECTION --- */}
-      {/* Increased pt-32 to ensure Navbar doesn't cover the Title */}
-      <section className="relative min-h-screen flex items-center pt-32 pb-12 overflow-hidden bg-slate-50">
-        
-        {/* Modern Geometric Background Elements - Kept at z-0 */}
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-cyan-500/[0.03] -skew-x-12 translate-x-32 hidden lg:block z-0" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl z-0" />
-        
+      <section className="relative bg-slate-950 pt-40 pb-20 overflow-hidden">
+
+        {/* Background grid + glow */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-30"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(6,182,212,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.12) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-cyan-500/[0.06] -skew-x-12 translate-x-32 hidden lg:block z-0" />
+
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
-          {/* Text Content - Forced to z-20 to stay on top */}
-          <motion.div 
+          {/* Text Content */}
+          <motion.div
             variants={staggerContainer}
             initial="initial"
             animate="animate"
             className="text-left relative z-20"
           >
-            <motion.div variants={fadeInUp} className="inline-flex items-center gap-3 mb-6 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100">
-              <span className="flex h-2 w-2 rounded-full bg-cyan-500 animate-pulse"></span>
-              <span className="text-cyan-600 font-bold tracking-widest uppercase text-[10px]">Indiamart Verified Sole Proprietor</span>
-            </motion.div>
-            
-            <motion.h1 variants={fadeInUp} className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 leading-[0.95] mb-6">
-              ENGINEERING <br />
-              <span className="text-cyan-500">PRECISION.</span>
+            <motion.h1 variants={fadeInUp} className="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-[1.05] mb-6 break-words">
+              COMPONENTS. <br />
+              CONNECTIONS. <br />
+              <span className="text-cyan-400">COMPLETE SOLUTIONS.</span>
             </motion.h1>
-            
-            <motion.p variants={fadeInUp} className="text-lg md:text-xl text-slate-600 mb-10 max-w-xl leading-relaxed">
-              Based in <span className="text-slate-900 font-bold underline decoration-cyan-500/30">Haryana</span>, Annika Technologies is a leading manufacturer of high-grade 
-              <span className="text-cyan-600"> PCB Card Assemblies</span>, 
-              <span className="text-cyan-600"> Wire Harnesses</span>, and 
-              <span className="text-cyan-600"> Industrial Indicators</span>. Founded in 2016, we deliver 
-              Made-in-India excellence to the global stage.
+
+            <motion.p variants={fadeInUp} className="text-slate-400 text-base md:text-lg mb-8 max-w-xl leading-relaxed">
+              Your trusted partner for high-quality PCB assemblies, wire harnesses, power cords and indicator switches, engineered and manufactured in Kalka, Haryana since 2016.
             </motion.p>
-            
+
+            <motion.div variants={fadeInUp} className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10 max-w-xl">
+              {HERO_FEATURES.map((f) => (
+                <div key={f.label} className="text-slate-300">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 mb-2">
+                    {f.icon}
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide leading-tight">{f.label}</p>
+                </div>
+              ))}
+            </motion.div>
+
             <motion.div variants={fadeInUp} className="flex flex-wrap gap-5">
-              <Link to="/products" className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-bold flex items-center gap-3 hover:bg-cyan-500 transition-all shadow-xl shadow-slate-200 hover:shadow-cyan-200 group">
-                View Full Catalog <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link to="/about" className="bg-white border-2 border-slate-200 text-slate-900 px-10 py-5 rounded-2xl font-bold hover:bg-slate-50 transition-all">
-                Our Heritage
+              <Link to="/products" className="bg-cyan-500 text-slate-950 px-8 py-4 rounded-xl font-bold flex items-center gap-3 hover:bg-cyan-400 transition-all shadow-xl shadow-cyan-500/20 group">
+                Explore Solutions <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
           </motion.div>
 
           {/* Visual Content */}
-          <motion.div 
-            initial={{ x: 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="relative z-10"
-          >
-            <div className="relative z-10 rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
+          <div className="relative z-10">
+            <div className="relative z-10 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white/10 w-full max-w-[480px] mx-auto" style={{ aspectRatio: "1 / 1" }}>
                <img
                 src="images/p1.jpg"
                 alt="PCB Card Assembly"
-                className="w-full aspect-square object-cover"
+                className="w-full h-full object-cover"
                />
             </div>
-            
-            {/* Detailed Floating Specs Card */}
-            <motion.div 
-              animate={{ y: [0, -15, 0] }}
-              transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-              className="absolute -bottom-10 -left-10 bg-white p-8 rounded-[2rem] shadow-2xl z-30 border border-slate-100 max-w-[240px]"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg"><Zap size={20}/></div>
-                <span className="font-black text-slate-900 text-sm">Tech Specs</span>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <span>Life Span</span>
-                  <span className="text-cyan-500">25,000 Hrs</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-cyan-500 h-full w-[90%]"></div>
-                </div>
-                <p className="text-[11px] text-slate-500 leading-tight">Standard rating for our high-grade Neon Indicator Lamps.</p>
-              </div>
-            </motion.div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -136,35 +122,41 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- CATEGORY PREVIEW --- */}
-      <section className="py-24 bg-slate-900 text-white overflow-hidden relative z-10">
+      {/* --- WHAT WE DO --- */}
+      <section className="py-24 bg-white relative z-10">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div className="max-w-xl">
-              <h2 className="text-cyan-400 font-black uppercase tracking-[0.3em] text-xs mb-4">Core Competencies</h2>
-              <h3 className="text-4xl md:text-5xl font-black">One-Stop Solution for <br/> Electronic Components</h3>
-            </div>
-            <Link to="/products" className="text-cyan-400 font-bold flex items-center gap-2 hover:underline">
-              Browse All Products <ArrowRight size={18}/>
-            </Link>
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <p className="text-cyan-600 font-black uppercase tracking-[0.3em] text-xs mb-4">What We Do</p>
+            <h3 className="text-4xl md:text-5xl font-black text-slate-900">Products. Manufacturing. Solutions.</h3>
+            <div className="h-1 w-16 bg-cyan-500 mx-auto mt-6 rounded-full" />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <CategoryCard
-              title="PCB Assemblies"
-              points={["Single & Double Sided", "35 Micron Copper", "HASL Surface Finish"]}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <WhatWeDoCard
+              icon={<Cpu size={22} />}
+              title="PCB Assembly"
+              desc="High-precision PCB card assemblies built with strict quality control for industrial and OEM applications."
               img="images/p1.jpg"
               category="PCB Assembly"
             />
-            <CategoryCard
+            <WhatWeDoCard
+              icon={<Zap size={22} />}
               title="Wire Harness"
-              points={["Custom 2-Pin PVC", "Pure Copper Core", "Industrial Durability"]}
+              desc="Custom wire harness looming engineered for reliability, durability and industrial performance."
               img="images/p2.jpg"
               category="Wire Harness"
             />
-            <CategoryCard
-              title="Neon Indicators"
-              points={["25,000 Hrs Life", "210V - 240V AC/DC", "22.5 mm Diameter"]}
+            <WhatWeDoCard
+              icon={<Settings size={22} />}
+              title="Electrical Accessories"
+              desc="Power cords, switch connectors, and wiring accessories for electrical and electronic systems."
+              img="images/wire-harness.png"
+              category="Electrical Accessories"
+            />
+            <WhatWeDoCard
+              icon={<ShieldCheck size={22} />}
+              title="Domestic & Industrial Indicators"
+              desc="Neon and LED indicator lamps and switch indicators for panel and equipment signaling."
               img="images/p3.webp"
               category="Domestic & Industrial Indicators"
             />
@@ -229,27 +221,32 @@ export default function Home() {
   );
 }
 
-function CategoryCard({ title, points, img, category }) {
+function WhatWeDoCard({ icon, title, desc, img, category }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="relative h-[450px] rounded-[3rem] overflow-hidden group border border-white/10"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      whileHover={{ y: -6 }}
+      className="group bg-white rounded-[1.75rem] border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col"
     >
-      <Link
-        to={category ? `/products?category=${encodeURIComponent(category)}` : "/products"}
-        className="absolute inset-0 z-10"
-        aria-label={`View ${title} products`}
-      />
-      <img src={img} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-700" />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent p-10 flex flex-col justify-end">
-        <h4 className="text-2xl font-black mb-4">{title}</h4>
-        <ul className="space-y-2">
-          {points.map((p, i) => (
-            <li key={i} className="text-sm text-slate-300 flex items-center gap-2">
-              <div className="h-1 w-1 bg-cyan-500 rounded-full" /> {p}
-            </li>
-          ))}
-        </ul>
+      <div className="relative h-44 bg-slate-50 shrink-0">
+        <div className="w-full h-full overflow-hidden rounded-t-[1.75rem]">
+          <img src={img} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        </div>
+        <div className="absolute -bottom-6 left-6 w-12 h-12 rounded-2xl bg-cyan-500 text-white flex items-center justify-center shadow-lg">
+          {icon}
+        </div>
+      </div>
+      <div className="p-6 pt-10 flex flex-col flex-1">
+        <h4 className="text-base font-black text-slate-900 mb-2 leading-snug">{title}</h4>
+        <p className="text-slate-500 text-sm leading-relaxed mb-5">{desc}</p>
+        <Link
+          to={category ? `/products?category=${encodeURIComponent(category)}` : "/products"}
+          className="text-cyan-600 font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all mt-auto"
+        >
+          Learn More <ArrowRight size={14} />
+        </Link>
       </div>
     </motion.div>
   );
